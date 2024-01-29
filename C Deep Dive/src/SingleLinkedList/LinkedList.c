@@ -4,6 +4,8 @@
 // Node*는 Node가리키는 포인터고 이걸 수정하려면 주소를 건들여야함
 // 그때 Node**!
 // **은 포인터 변수의 주소를 가르키는 포인터
+
+// Node**는 구조체배열 Node가 아니라 Node*를 쓴거는 동적할당 하기 위함
 Node* SLL_CreateNode(ElementType NewData){
     Node* NewNode =(Node*)malloc(sizeof(Node));
     NewNode->Data=NewData;
@@ -83,4 +85,12 @@ int SLL_GetNodeCount(Node* Head){
         Count++;
     }
     return Count;
+}
+
+int main(){
+    Node* NewNode = NULL;
+    NewNode = SLL_CreateNode(-1);
+    Node* List = NULL;
+
+    SLL_AppendNode(List,NewNode);
 }
