@@ -131,13 +131,13 @@ int main(void){
         fprintf(stderr,"open error for %s \n",fname);
         exit(1);
     }
-    fd2 = dup(fd1);
-    count = read(fd1,buf,12);
-    buf[count] = 0;
+    fd2 = dup(fd1);// dup 함수는 파일 디스크립터를 복제하는 함수입니다. fd1이 가리키는 파일을 나타내는 새로운 파일 디스크립터 fd2가 생성됩니다.
+    count = read(fd1,buf,12); //read 함수를 사용하여 파일 디스크립터 fd1이 가리키는 파일에서 최대 12바이트의 데이터를 읽어와서 buf 배열에 저장합니다.
+    buf[count] = 0; //읽어온 데이터의 마지막에 null 문자('\0')를 추가하여 문자열을 만듭니다. 이렇게 함으로써 나중에 printf 함수로 문자열을 출력할 때, 올바른 문자열을 출력할 수 있습니다.
     printf("fd1's printf : %s\n",buf);
-    lseek(fd1,1,SEEK_CUR);
-    count = read(fd2,buf,12);
-    buf[count] = 0;
+    lseek(fd1,1,SEEK_CUR); //lseek 함수를 사용하여 fd1이 가리키는 파일에서 현재 위치를 1바이트만큼 이동시킵니다.
+    count = read(fd2,buf,12); //이제 fd2를 이용하여 파일에서 데이터를 읽어옵니다. fd2와 fd1은 같은 파일을 가리키기 때문에, fd1에서의 lseek로 인해 fd2에서도 현재 위치가 이동되어 있습니다. 다시 read 함수를 사용하여 최대 12바이트의 데이터를 읽어옵니다.
+    buf[count] = 0; //읽어온 데이터의 마지막에 null 문자를 추가하여 문자열을 만듭니다.
     printf("fd2's printf : %s\n",buf);
     exit(0);
 }
@@ -148,6 +148,28 @@ int main(void){
   fd2's printf : Hello Kathy!
 - dup()은 dup_exercise.txt 파일을 open() 호출을 통해 리턴 받은 파일 디스크립터를 dup()를 호출하여 복사한다.
 - dup()를 호출하여 복사한 파일 디스크립터는 원본이 되는 파일 디스크립터와 오프셋을 공유하기 때문에 fd2에서 읽은 데이터는 fd1에서 읽은 데이터의 뒷부분이 된다.
+- dup 한후 단순히 write하면 파일에 쓰는거고 이걸 콘솔에 불러오고 싶다면?
+  - while문 돌리면서 read하고 + fprintf또는 putchar해준다!
+
+## fsync(), fdatasync()
+
+```c
+#include <unistd.h>
+int fsync(int filedes);
+int fdatasync(int filedes);
+
+void sync(void);
+```
+
+- sync(), fsync(), fdatasync()는 디스크 상의 파일 시스템과 버퍼 캐쉬의 내용간의 일관성을 보장하기 위해 사용하는 시스템 호출 함수.
+- sync()와 fsync()를 통해 버퍼 캐쉬의 내용을 디스크에 쓴다
+  - sync(): 변경된 모든내용을 디스크에 씀 , 디스크 입출력이 완료될 때 까지 대기하지 않고 곧바로 리턴
+  - fsync() : 인자로 지정한 파일의 변경된 내용만 디스크에 씀, 입출력이 완료된 후에 리턴
+- 리눅스, 유닉스에서는 디스크 입출력 시 주기억장치 내에 버퍼 캐쉬라고 불리는 임시 버퍼를 사용함으로써 시스템 효율을 높이는 기법을 쓴다.
+- write호출시 바로 디스크에 쓰는 것이 아닌 일정한 양을 블록 크기로 모아 나중에 한번에 디스크로 쓴다.
+- read()도 호출할 때 마다 디스크로부터 읽는 것이 아닌 최초에 read() 호출할 때 원하는 데이터 포함한 데이터 블록을 주기억장치 내 버퍼 캐쉬에서 읽고 다음번 read() 호출에 대해서도 버퍼 캐쉬로 부터 먼저 읽는다.
+- 전원이 꺼질 때를 대비하여 버퍼 캐쉬 내용과 디스크 내용을 일치 시켜야 하는데 리눅스 커널 프로세스 중 update라는 프로세스는 버퍼 캐쉬의 데이터를 디스크 블록에 써 디스크 블록 내용을 갱신하는 역할을 수행
+- fsync() 사용하면 버퍼 캐쉬 전체가 아닌 개별 파일을 대상으로 디스크 입출력을 수행할 수 있기에 시스템 효율을 저하시키지 않으면서 원하는 목적 얻기 가능!
 
 ## fsync(), fdatasync()
 
